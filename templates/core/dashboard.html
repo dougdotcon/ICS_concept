@@ -1,0 +1,372 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Dashboard ICS - Estatísticas{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 text-primary">
+                <i class="bi bi-graph-up"></i> Dashboard ICS
+            </h1>
+            <p class="lead text-muted">Estatísticas e análises dos cálculos do Índice de Contribuição Social</p>
+        </div>
+    </div>
+
+    <!-- Cards de Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center bg-primary text-white">
+                <div class="card-body">
+                    <i class="bi bi-people display-4"></i>
+                    <h3 class="mt-2" id="totalProfiles">{{ total_profiles }}</h3>
+                    <p class="mb-0">Total de Perfis</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-success text-white">
+                <div class="card-body">
+                    <i class="bi bi-calculator display-4"></i>
+                    <h3 class="mt-2" id="avgScore">{{ avg_score|floatformat:3 }}</h3>
+                    <p class="mb-0">ICS Médio</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-info text-white">
+                <div class="card-body">
+                    <i class="bi bi-graph-up display-4"></i>
+                    <h3 class="mt-2" id="medianScore">-</h3>
+                    <p class="mb-0">ICS Mediano</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-warning text-white">
+                <div class="card-body">
+                    <i class="bi bi-clock display-4"></i>
+                    <h3 class="mt-2">Hoje</h3>
+                    <p class="mb-0">Última Atualização</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row">
+        <!-- Distribuição de Scores -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-pie-chart"></i> Distribuição de Scores ICS
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="distributionChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparação de Componentes -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-bar-chart"></i> Componentes Médios do ICS
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="componentsChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Histórico de Cálculos -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list"></i> Cálculos Recentes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="recentCalculationsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>ICS Score</th>
+                                    <th>Confiança</th>
+                                    <th>Explicação</th>
+                                    <th>Data</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for profile in recent_profiles %}
+                                <tr>
+                                    <td>{{ profile.id }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if profile.ics_score >= 0.7 %}success{% elif profile.ics_score >= 0.4 %}warning{% else %}danger{% endif %}">
+                                            {{ profile.ics_score|floatformat:3 }}
+                                        </span>
+                                    </td>
+                                    <td>{{ profile.ics_confidence|floatformat:1 }}%</td>
+                                    <td>{{ profile.ics_explanation|truncatechars:50 }}</td>
+                                    <td>{{ profile.created_at|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewProfile({{ profile.id }})">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">
+                                        Nenhum cálculo encontrado
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas Detalhadas -->
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Informações do Sistema
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Algoritmo:</h6>
+                            <p class="text-muted mb-3">ICS v0 - Pesos fixos para MVP</p>
+                            
+                            <h6>Componentes:</h6>
+                            <ul class="text-muted">
+                                <li>Fiscal: 30%</li>
+                                <li>Trabalho: 25%</li>
+                                <li>Patrimônio: 20%</li>
+                                <li>Transferências: 15%</li>
+                                <li>Benefícios: -10%</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Fontes de Dados:</h6>
+                            <ul class="text-muted">
+                                <li>API IBGE (PIB Municipal)</li>
+                                <li>Base RAIS/CAGED (mock)</li>
+                                <li>Campos livres (patrimônio)</li>
+                            </ul>
+                            
+                            <h6>Meta do Piloto:</h6>
+                            <p class="text-muted">Correlação ≥ 0,6 com percepção qualitativa</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-tools"></i> Ações
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'core:home' %}" class="btn btn-primary">
+                            <i class="bi bi-plus-circle"></i> Novo Cálculo
+                        </a>
+                        <button class="btn btn-outline-secondary" onclick="exportData()">
+                            <i class="bi bi-download"></i> Exportar Dados
+                        </button>
+                        <button class="btn btn-outline-info" onclick="refreshStats()">
+                            <i class="bi bi-arrow-clockwise"></i> Atualizar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Detalhes do Perfil -->
+<div class="modal fade" id="profileModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalhes do Perfil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="profileModalBody">
+                <!-- Conteúdo carregado via JavaScript -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardData();
+    initializeCharts();
+    
+    // Ativar tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+
+function loadDashboardData() {
+    axios.get('/api/dashboard/stats/')
+        .then(response => {
+            const data = response.data;
+            
+            // Atualizar cards
+            document.getElementById('totalProfiles').textContent = data.total_profiles;
+            document.getElementById('avgScore').textContent = data.avg_ics_score;
+            document.getElementById('medianScore').textContent = data.median_ics_score;
+            
+            // Atualizar gráficos
+            updateDistributionChart(data.score_distribution);
+            updateComponentsChart();
+            updateRecentCalculations(data.recent_calculations);
+        })
+        .catch(error => {
+            console.error('Erro ao carregar dados do dashboard:', error);
+        });
+}
+
+function initializeCharts() {
+    // Gráfico de distribuição
+    const distCtx = document.getElementById('distributionChart').getContext('2d');
+    window.distributionChart = new Chart(distCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Baixo (0-0.4)', 'Médio (0.4-0.7)', 'Alto (0.7-1.0)'],
+            datasets: [{
+                data: [0, 0, 0],
+                backgroundColor: ['#dc3545', '#ffc107', '#198754']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+    
+    // Gráfico de componentes
+    const compCtx = document.getElementById('componentsChart').getContext('2d');
+    window.componentsChart = new Chart(compCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Fiscal', 'Trabalho', 'Patrimônio', 'Transferências', 'Benefícios'],
+            datasets: [{
+                label: 'Peso no Cálculo',
+                data: [0.30, 0.25, 0.20, 0.15, -0.10],
+                backgroundColor: ['#0d6efd', '#198754', '#fd7e14', '#6f42c1', '#dc3545']
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 0.35,
+                    min: -0.15
+                }
+            }
+        }
+    });
+}
+
+function updateDistributionChart(distribution) {
+    if (window.distributionChart) {
+        const values = Object.values(distribution);
+        window.distributionChart.data.datasets[0].data = values;
+        window.distributionChart.update();
+    }
+}
+
+function updateComponentsChart() {
+    // Componentes já estão fixos no MVP
+    if (window.componentsChart) {
+        window.componentsChart.update();
+    }
+}
+
+function updateRecentCalculations(calculations) {
+    // Atualizar tabela de cálculos recentes se necessário
+    console.log('Cálculos recentes:', calculations);
+}
+
+function viewProfile(profileId) {
+    axios.get(`/api/profiles/${profileId}/`)
+        .then(response => {
+            const profile = response.data;
+            
+            const modalBody = document.getElementById('profileModalBody');
+            modalBody.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Dados Básicos:</h6>
+                        <p><strong>ID:</strong> ${profile.id}</p>
+                        <p><strong>Criado em:</strong> ${new Date(profile.created_at).toLocaleString('pt-BR')}</p>
+                        <p><strong>ICS Score:</strong> ${profile.ics_score}</p>
+                        <p><strong>Confiança:</strong> ${(profile.ics_confidence * 100).toFixed(1)}%</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Dados Familiares:</h6>
+                        <p><strong>Local de Nascimento:</strong> ${profile.birth_place || 'N/A'}</p>
+                        <p><strong>Profissão do Pai:</strong> ${profile.father_job || 'N/A'}</p>
+                        <p><strong>Profissão da Mãe:</strong> ${profile.mother_job || 'N/A'}</p>
+                        <p><strong>Status Herança:</strong> ${profile.inheritance_status || 'N/A'}</p>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6>Explicação:</h6>
+                        <p>${profile.ics_explanation}</p>
+                    </div>
+                </div>
+            `;
+            
+            const modal = new bootstrap.Modal(document.getElementById('profileModal'));
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Erro ao carregar perfil:', error);
+            alert('Erro ao carregar detalhes do perfil');
+        });
+}
+
+function exportData() {
+    // Implementar exportação de dados
+    alert('Funcionalidade de exportação será implementada');
+}
+
+function refreshStats() {
+    loadDashboardData();
+}
+</script>
+{% endblock %} 

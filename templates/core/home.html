@@ -1,0 +1,220 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Calculadora ICS - Índice de Contribuição Social{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="text-center mb-5">
+                <h1 class="display-4 text-primary">
+                    <i class="bi bi-calculator"></i> Calculadora ICS
+                </h1>
+                <p class="lead text-muted">
+                    Calcule seu Índice de Contribuição Social baseado em dados objetivos
+                </p>
+            </div>
+
+            <!-- Formulário -->
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-form-check"></i> Dados para Cálculo do ICS
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form id="icsForm">
+                        <!-- Dados de Nascimento -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary">
+                                    <i class="bi bi-geo-alt"></i> Dados de Nascimento
+                                </h5>
+                                <hr>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="fetchBirthData" name="fetch_birth_data">
+                                    <label class="form-check-label" for="fetchBirthData">
+                                        Buscar dados via API IBGE
+                                        <i class="bi bi-info-circle" data-bs-toggle="tooltip" 
+                                           title="Busca automaticamente PIB per capita do município"></i>
+                                    </label>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="birthPlace" class="form-label">Cidade de Nascimento</label>
+                                    <input type="text" class="form-control" id="birthPlace" name="birth_place" 
+                                           placeholder="Ex: São Paulo">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="birthState" class="form-label">Estado (UF)</label>
+                                    <input type="text" class="form-control" id="birthState" name="birth_state" 
+                                           placeholder="Ex: SP" maxlength="2">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dados Familiares -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary">
+                                    <i class="bi bi-people"></i> Dados Familiares
+                                </h5>
+                                <hr>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="fetchFatherJob" name="fetch_father_job">
+                                    <label class="form-check-label" for="fetchFatherJob">
+                                        Buscar salário médio do pai via RAIS
+                                    </label>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="fatherJob" class="form-label">Profissão do Pai</label>
+                                    <input type="text" class="form-control" id="fatherJob" name="father_job" 
+                                           placeholder="Ex: Engenheiro">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="fatherSalary" class="form-label">Salário do Pai (R$)</label>
+                                    <input type="number" class="form-control" id="fatherSalary" name="father_salary" 
+                                           placeholder="0" step="0.01">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="fetchMotherJob" name="fetch_mother_job">
+                                    <label class="form-check-label" for="fetchMotherJob">
+                                        Buscar salário médio da mãe via RAIS
+                                    </label>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="motherJob" class="form-label">Profissão da Mãe</label>
+                                    <input type="text" class="form-control" id="motherJob" name="mother_job" 
+                                           placeholder="Ex: Professora">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="motherSalary" class="form-label">Salário da Mãe (R$)</label>
+                                    <input type="number" class="form-control" id="motherSalary" name="mother_salary" 
+                                           placeholder="0" step="0.01">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Patrimônio -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary">
+                                    <i class="bi bi-house"></i> Patrimônio Familiar
+                                </h5>
+                                <hr>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="propertyValue" class="form-label">Valor do Patrimônio Imobiliário (R$)</label>
+                                    <input type="number" class="form-control" id="propertyValue" name="family_property_value" 
+                                           placeholder="0" step="0.01">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="financialValue" class="form-label">Patrimônio Financeiro (R$)</label>
+                                    <input type="number" class="form-control" id="financialValue" name="family_financial_value" 
+                                           placeholder="0" step="0.01">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Herança e Benefícios -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="text-primary">
+                                    <i class="bi bi-gift"></i> Herança e Benefícios
+                                </h5>
+                                <hr>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="inheritanceStatus" class="form-label">Status da Herança</label>
+                                    <select class="form-select" id="inheritanceStatus" name="inheritance_status">
+                                        <option value="">Selecione...</option>
+                                        <option value="recebeu">Recebeu herança</option>
+                                        <option value="sem">Não recebeu/deserdado</option>
+                                        <option value="aguardando">Aguardando herança</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="benefitsValue" class="form-label">Benefícios Sociais (R$/mês)</label>
+                                    <input type="number" class="form-control" id="benefitsValue" name="benefits_value" 
+                                           placeholder="0" step="0.01">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="taxPaid" class="form-label">Impostos Pagos (R$/ano)</label>
+                                    <input type="number" class="form-control" id="taxPaid" name="tax_paid" 
+                                           placeholder="0" step="0.01">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botão de Submit -->
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary btn-lg px-5" id="calculateBtn">
+                                <i class="bi bi-calculator"></i> Calcular ICS
+                                <span class="spinner-border spinner-border-sm ms-2 d-none" id="loadingSpinner"></span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Resultado -->
+            <div id="resultCard" class="card shadow mt-4 d-none">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-check-circle"></i> Resultado do ICS
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <h3 class="text-primary mb-0" id="icsScore">-</h3>
+                            <small class="text-muted">Índice ICS</small>
+                            <div class="mt-2">
+                                <span class="badge bg-info" id="percentile">-</span>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <h6>Explicação:</h6>
+                            <p id="explanation" class="mb-2"></p>
+                            <div class="progress">
+                                <div class="progress-bar" id="confidenceBar" style="width: 0%"></div>
+                            </div>
+                            <small class="text-muted">Confiança: <span id="confidence">0%</span></small>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h6>Componentes do ICS:</h6>
+                            <canvas id="componentsChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alert para erros -->
+            <div id="errorAlert" class="alert alert-danger mt-4 d-none"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/ics_calculator.js' %}"></script>
+{% endblock %} 
